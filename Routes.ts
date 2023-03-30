@@ -3,6 +3,6 @@ import check from "./src/functions/check";
 
 const Router = express.Router();
 
-Router.post("/", check);
+Router.get("/", check);
 
 export default Router;
