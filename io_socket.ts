@@ -75,15 +75,19 @@ const addSocket = async (tempSocket: Socket) => {
 };
 
 const getSocketId = (userId: string) => {
-  return userDetails.get(userId)["socketId"];
+  return userDetails.get(userId)!["socketId"];
 };
 
 const getSocketDetail = (socketId: string) => {
   return socketDetails.get(socketId);
 };
 
+const isUserId = (userId: string) => {
+  return userDetails.has(userId);
+};
+
 const getUserId = (socketId: string) => {
-  return socketDetails.get(socketId)["userId"];
+  return socketDetails.get(socketId)!["userId"];
 };
 
 const getUserDetail = (userId: string) => {
@@ -92,11 +96,11 @@ const getUserDetail = (userId: string) => {
 
 const getUserName = (userId: string) => {
   console.log(userDetails.get(userId));
-  return userDetails.get(userId)["userName"];
+  return userDetails.get(userId)!["userName"];
 };
 
 const getFcmTokens = (userId: string) => {
-  return userDetails.get(userId)["fcmTokens"];
+  return userDetails.get(userId)!["fcmTokens"];
 };
 
 const removeSocket = (tempSocket: Socket) => {
@@ -104,7 +108,7 @@ const removeSocket = (tempSocket: Socket) => {
 
   sockets.splice(index, 1);
 
-  const userId = socketDetails.get(tempSocket.id)["userId"];
+  const userId = socketDetails.get(tempSocket.id)!["userId"];
   const userDetail = userDetails.get(userId);
   userDetails.set(userId, {
     socketId: "",
@@ -136,6 +140,7 @@ export default {
   addSocket,
   getSocketId,
   getSocketDetail,
+  isUserId,
   getUserId,
   getUserDetail,
   getUserName,

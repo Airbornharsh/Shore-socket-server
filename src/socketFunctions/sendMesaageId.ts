@@ -8,6 +8,13 @@ const main = async (io: Socket, socket: Socket, data: any) => {
   //receiverUserId
   //message
 
+  if (io_socket.isUserId(data.receiverUserId)) {
+    console.log("User is online");
+  } else {
+    console.log("User is not There");
+    return;
+  }
+
   const receiverSocketId = io_socket.getSocketId(data.receiverUserId);
   const senderSocketId = socket.id;
   const senderUserId = io_socket.getUserId(senderSocketId);
