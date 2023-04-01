@@ -1,5 +1,5 @@
 import express from "express";
-import check from "./src/functions/check";
+import check from "./src/controllers/check";
 const {
   SendPushNotification,
 } = require("./src/controllers/push-notifications-controller");

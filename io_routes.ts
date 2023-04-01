@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import io_socket from "./io_socket";
-import addPostLike from "./src/socketFunctions/signedUser/post/addLike";
+import addPostLike from "./src/socketControllers/signedUser/post/addLike";
+import sendMessageId from "./src/socketFunctions/sendMesaageId";
 
 const main = () => {
   const io = io_socket.getIO();
@@ -23,13 +24,7 @@ const main = () => {
     });
 
     socket.on("send-message-id", (data) => {
-      console.log("sent");
-      io.to(data.receiverSocketId).emit("receive-message-id", {
-        receiverSocketId: data.receiverSocketId,
-        senderSocketId: socket.id,
-        senderUserId: data.senderUserId,
-        message: data.message,
-      });
+      sendMessageId(io,socket,data);
     });
 
     socket.on("disconnect", () => {
