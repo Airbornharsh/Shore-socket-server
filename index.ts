@@ -1,17 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
+
+dotenv.config();
+
 import http from "http";
-import socketio, { Socket } from "socket.io";
 import cors from "cors";
 import bodyParser from "body-parser";
 import io_socket from "./io_socket";
 import io_routes from "./io_routes";
 import Router from "./Routes";
 
-dotenv.config();
+// console.log(serviceAccount)
 
 const app = express();
-const port = process.env.PORT || 4000;
 const server = http.createServer(app);
 
 const io = require("socket.io")(server, {
@@ -34,6 +35,7 @@ app.use(Router);
 
 io_routes();
 
+const port = process.env.PORT || 4000;
 server.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });
