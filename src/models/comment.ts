@@ -8,4 +8,4 @@ const commentSchema = new Schema({
   likes: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
 });
 
-export default model("Comment", commentSchema);
+export default models.Comment || model("Comment", commentSchema);

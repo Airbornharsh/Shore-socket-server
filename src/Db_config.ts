@@ -3,13 +3,11 @@ import user from "./models/user";
 import comment from "./models/comment";
 import post from "./models/post";
 
-const Db_Uri = process.env.DB_URI1;
-
 const DbConnect = async () => {
   try {
-    const connect = await mongoose.connect(Db_Uri as string, () => {
-      console.log("Db Connected");
-    });
+    const connect = await mongoose.connect(process.env.DB_URI1 as string);
+
+    console.log("Db connected");
     return {
       connect,
       user,
@@ -21,4 +19,4 @@ const DbConnect = async () => {
   }
 };
 
-module.exports = { DbConnect };
+export { DbConnect };

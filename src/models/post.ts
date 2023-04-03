@@ -9,4 +9,4 @@ const postSchema = new Schema({
   comments: [{ type: Schema.Types.ObjectId, ref: "Comment", default: [] }],
 });
 
-export default model("Post", postSchema);
+export default models.Post || model("Post", postSchema);

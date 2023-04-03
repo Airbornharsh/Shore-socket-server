@@ -5,3 +5,5 @@ node_modules
 .env.local
 
 firbaseConfig.json
+
+/src/jsons/

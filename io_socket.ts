@@ -1,12 +1,26 @@
 import { verify } from "jsonwebtoken";
 import { Socket } from "socket.io";
+import fs from "fs";
+import { DbConnect } from "./src/Db_config";
 
 let io: Socket;
 let sockets: String[] = [];
-let socketDetails: Map<string, any> = new Map();
-let userDetails: Map<string, any> = new Map();
+// const socketDetailsJson = fs.readFileSync(
+//   "./src/jsons/socketDetails.json",
+//   "utf8"
+// );
+// let socketDetails: Map<string, any> = socketDetailsJson
+//   ? new Map(Object.entries(JSON.parse(socketDetailsJson)))
+//   : new Map();
+// const userDetailsJson = fs.readFileSync("./src/jsons/userDetails.json", "utf8");
+// let userDetails: Map<string, any> = userDetailsJson
+//   ? new Map(Object.entries(JSON.parse(userDetailsJson)))
+//   : new Map();
 
-const setIO = (tempIo: Socket) => {
+const socketDetails: Map<string, any> = new Map();
+const userDetails: Map<string, any> = new Map();
+
+const setIO = async (tempIo: Socket) => {
   io = tempIo;
 };
 
@@ -14,11 +28,27 @@ const getIO = () => {
   return io;
 };
 
+const userDataToMap = async () => {
+  const DbModels = await DbConnect();
+
+  const userData = await DbModels?.user
+    .find({})
+    .select("userName deviceTokens socketIds");
+
+  userData?.forEach((user) => {
+    userDetails.set(user._id.toString(), {
+      userName: user.userName,
+      deviceTokens: user.deviceTokens,
+      socketIds: user.socketIds,
+    });
+  });
+};
+
 const addSocket = async (tempSocket: Socket) => {
   const accessToken: String = tempSocket.handshake.query["accessToken"]
     ? (tempSocket.handshake.query["accessToken"] as String)
     : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6ImhhcnNoIiwiZW1haWxJZCI6ImFkbWluQGV4YW1wbGUuY29tIiwicGhvbmVOdW1iZXIiOjkwOTA5MDkwOTAsIl9pZCI6IjYzZDc4ZjFiYjIyYTI5YzExNTMxMjBkOSIsImlhdCI6MTY4MDMzMzU4NH0.KVT1RFjCdoD9uOacgQaOVZAmMFnqhcv_37bMMqwSETw";
-  const fcmToken = tempSocket.handshake.query["fcmToken"]
+  const deviceToken = tempSocket.handshake.query["fcmToken"]
     ? (tempSocket.handshake.query["fcmToken"] as String)
     : "fBCsyZYpQ56U81RG-j_V_N:APA91bGcwv77rxbNQiX4t0Q3Ui-Lz6nz8NwWD0HxkIQk_nTtuEfU-L4ZyHe1b2F0Ds5QKolMItOsMVjG6cOSRetp99dKmPaMS1qrA-jZ1FnwAmcPOMylyGc6jqdD38BmsCr18FcR90h9";
 
@@ -49,33 +79,101 @@ const addSocket = async (tempSocket: Socket) => {
   } else {
     socketDetails.set(tempSocket.id, {
       userId: tempUserId,
-      fcmTokens: [fcmToken],
+      deviceTokens: [deviceToken],
     });
+
+    // fs.writeFileSync(
+    // "./src/jsons/socketDetails.json",
+    // JSON.stringify(Object.fromEntries(socketDetails))
+    // );
   }
 
+  const DbModels = await DbConnect();
+
   //check user in User Detail
+  const userDetail = userDetails.get(tempUserId);
   if (userDetails.has(tempUserId)) {
-    if (userDetails.get(tempUserId)["socketId"].length == 0) {
+    if (userDetail["socketIds"].length == 0) {
       userDetails.set(tempUserId, {
         userName: userName,
-        socketId: tempSocket.id,
-        fcmTokens: [fcmToken],
+        socketIds: [tempSocket.id],
+        deviceTokens: [...userDetail["deviceTokens"], deviceToken],
       });
+
+      // fs.writeFileSync(
+      //   "./src/jsons/userDetails.json",
+      //   JSON.stringify(Object.fromEntries(userDetails))
+      // );
+
+      await DbModels?.user.updateOne(
+        { _id: tempUserId },
+        {
+          $set: {
+            socketIds: [tempSocket.id],
+          },
+        }
+      );
+    } else {
+      userDetails.set(tempUserId, {
+        userName: userName,
+        socketIds: [...userDetail["socketIds"], tempSocket.id],
+        deviceTokens: [...userDetail["deviceTokens"], deviceToken],
+      });
+
+      // fs.writeFileSync(
+      //   "./src/jsons/userDetails.json",
+      //   JSON.stringify(Object.fromEntries(userDetails))
+      // );
+      if (userDetail["deviceTokens"].includes(deviceToken)) {
+        await DbModels?.user.updateOne(
+          { _id: tempUserId },
+          {
+            $push: {
+              socketIds: tempSocket.id,
+            },
+          }
+        );
+      } else {
+        console.log("New Device 1");
+        await DbModels?.user.updateOne(
+          { _id: tempUserId },
+          {
+            $push: {
+              socketIds: tempSocket.id,
+              deviceTokens: deviceToken,
+            },
+          }
+        );
+      }
     }
   } else {
     userDetails.set(tempUserId, {
       userName: userName,
-      socketId: tempSocket.id,
-      fcmTokens: [fcmToken],
+      socketIds: [tempSocket.id],
+      deviceTokens: [, , , userDetail["deviceTokens"], deviceToken],
     });
+
+    await DbModels?.user.updateOne(
+      { _id: tempUserId },
+      {
+        $set: {
+          socketIds: [tempSocket.id],
+        },
+        $push: {
+          deviceTokens: deviceToken,
+        },
+      }
+    );
   }
 
-  // console.log(socketDetails);
-  // console.log(userDetails);
+  // await fs.writeFileSync(
+  // "./src/jsons/userDetails.json",
+  // JSON.stringify(Object.fromEntries(userDetails))
+  // );
 };
 
-const getSocketId = (userId: string) => {
-  return userDetails.get(userId)!["socketId"];
+const getsocketIds = (userId: string) => {
+  return userDetails.get(userId)!["socketIds"];
 };
 
 const getSocketDetail = (socketId: string) => {
@@ -99,23 +197,57 @@ const getUserName = (userId: string) => {
   return userDetails.get(userId)!["userName"];
 };
 
-const getFcmTokens = (userId: string) => {
-  return userDetails.get(userId)!["fcmTokens"];
+const getDeviceTokens = (userId: string) => {
+  return userDetails.get(userId)!["deviceTokens"];
 };
 
-const removeSocket = (tempSocket: Socket) => {
+const removeSocket = async (tempSocket: Socket) => {
   const index = sockets.indexOf(tempSocket.id);
 
   sockets.splice(index, 1);
 
   const userId = socketDetails.get(tempSocket.id)!["userId"];
   const userDetail = userDetails.get(userId);
+  userDetail["socketIds"].splice(
+    userDetail["socketIds"].indexOf(tempSocket.id),
+    1
+  );
   userDetails.set(userId, {
-    socketId: "",
-    fcmTokens: userDetail["fcmTokens"],
+    socketIds: [...userDetail["socketIds"]],
+    deviceTokens: userDetail["deviceTokens"],
   });
 
+  // read file and make object
+  // let userJson = JSON.parse(
+  //   fs.readFileSync("./src/jsons/userDetails.json", "utf8")
+  // );
+  // // edit or add property
+  // userJson[userId]["socketIds"] = "";
+  // //write file
+  // fs.writeFileSync("./src/jsons/userDetails.json", JSON.stringify(userJson));
+
+  console.log(socketDetails);
   socketDetails.delete(tempSocket.id);
+  console.log(socketDetails);
+
+  //write file
+  // fs.writeFileSync(
+  //   "./src/jsons/socketDetails.json",
+  //   JSON.stringify(Object.fromEntries(socketDetails))
+  // );
+
+  const DbModels = await DbConnect();
+
+  console.log(tempSocket.id);
+
+  DbModels?.user.updateOne(
+    { _id: userId },
+    {
+      $pull: {
+        socketIds: tempSocket.id,
+      },
+    }
+  );
 };
 
 const listSockets = () => {
@@ -137,14 +269,15 @@ const socketLength = () => {
 export default {
   setIO,
   getIO,
+  userDataToMap,
   addSocket,
-  getSocketId,
+  getsocketIds,
   getSocketDetail,
   isUserId,
   getUserId,
   getUserDetail,
   getUserName,
-  getFcmTokens,
+  getDeviceTokens,
   removeSocket,
   listSockets,
   listOtherSockets,

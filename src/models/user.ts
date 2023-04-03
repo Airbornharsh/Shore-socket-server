@@ -42,6 +42,8 @@ const userSchema = new Schema({
     required: true,
     default: false,
   },
+  deviceTokens: [{ type: String, default: [] }],
+  socketIds: [{ type: String, default: [] }],
   chats: [{ type: Schema.Types.ObjectId, default: [] }],
   posts: [{ type: Schema.Types.ObjectId, ref: "Post", default: [] }],
   followers: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
@@ -71,4 +73,4 @@ const userSchema = new Schema({
   fav: [{ type: Schema.Types.ObjectId, ref: "Post", default: [] }],
 });
 
-export default model("User", userSchema);
+export default models.User || model("User", userSchema);

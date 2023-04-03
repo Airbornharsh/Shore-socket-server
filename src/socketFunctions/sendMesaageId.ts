@@ -15,15 +15,15 @@ const main = async (io: Socket, socket: Socket, data: any) => {
     return;
   }
 
-  const receiverSocketId = io_socket.getSocketId(data.receiverUserId);
+  const receiverSocketIds = io_socket.getsocketIds(data.receiverUserId);
   const senderSocketId = socket.id;
   const senderUserId = io_socket.getUserId(senderSocketId);
   const senderUserName = io_socket.getUserName(senderUserId);
-  const fcmTokens = await io_socket.getFcmTokens(data.receiverUserId);
+  const deviceTokens = await io_socket.getDeviceTokens(data.receiverUserId);
 
-  if (receiverSocketId.length == 0) {
-    fcmTokens.forEach(async (fcmToken: string) => {
-      await pushNotification(fcmToken, senderUserName, data.message, {
+  if (receiverSocketIds.length == 0) {
+    deviceTokens.forEach(async (deviceToken: string) => {
+      await pushNotification(deviceToken, senderUserName, data.message, {
         senderUserId: senderUserId,
         senderSocketId: socket.id,
         receiverUserId: data.receiverUserId,
@@ -32,22 +32,24 @@ const main = async (io: Socket, socket: Socket, data: any) => {
       });
     });
   } else {
-    fcmTokens.forEach(async (fcmToken: string) => {
-      await pushNotification(fcmToken, senderUserName, data.message, {
+    deviceTokens.forEach(async (deviceToken: string) => {
+      await pushNotification(deviceToken, senderUserName, data.message, {
         senderUserId: senderUserId,
         senderSocketId: socket.id,
         receiverUserId: data.receiverUserId,
-        receiverSocketId: receiverSocketId,
+        receiverSocketId: "",
         message: data.message,
       });
     });
 
-    io.to(receiverSocketId).emit("receive-message-id", {
-      receiverUserId: data.receiverUserId,
-      receiverSocketId: receiverSocketId,
-      senderSocketId: socket.id,
-      senderUserId: senderUserId,
-      message: data.message,
+    receiverSocketIds.forEach((receiverSocketId: string) => {
+      io.to(receiverSocketId).emit("receive-message-id", {
+        receiverUserId: data.receiverUserId,
+        receiverSocketId: receiverSocketId,
+        senderSocketId: socket.id,
+        senderUserId: senderUserId,
+        message: data.message,
+      });
     });
   }
 };

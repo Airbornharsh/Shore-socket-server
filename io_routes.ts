@@ -2,8 +2,11 @@ import { Socket } from "socket.io";
 import io_socket from "./io_socket";
 import addPostLike from "./src/socketControllers/signedUser/post/addLike";
 import sendMessageId from "./src/socketFunctions/sendMesaageId";
+import { DbConnect } from "./src/Db_config";
 
-const main = () => {
+const main = async () => {
+  await io_socket.userDataToMap();
+
   const io = io_socket.getIO();
 
   let count = 0;
@@ -24,7 +27,7 @@ const main = () => {
     });
 
     socket.on("send-message-id", (data) => {
-      sendMessageId(io,socket,data);
+      sendMessageId(io, socket, data);
     });
 
     socket.on("disconnect", () => {
