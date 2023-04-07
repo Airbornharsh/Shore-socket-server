@@ -1,11 +1,15 @@
 import express from "express";
 import dotenv from "dotenv";
+import { setFirebase } from "./firebase_config";
 
 dotenv.config();
 
 import http from "http";
 import cors from "cors";
 import bodyParser from "body-parser";
+
+setFirebase();
+
 import io_socket from "./io_socket";
 import io_routes from "./io_routes";
 import Router from "./Routes";
