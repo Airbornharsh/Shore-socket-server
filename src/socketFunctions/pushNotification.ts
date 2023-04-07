@@ -17,7 +17,9 @@ const serviceAccount = {
   client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
 };
 
-serviceAccount.private_key = serviceAccount.private_key!.replace(/\\n/g, "");
+serviceAccount.private_key = serviceAccount
+  .private_key!.split(String.raw`\n`)
+  .join("\n");
 
 const certPath = admin.credential.cert(serviceAccount);
 

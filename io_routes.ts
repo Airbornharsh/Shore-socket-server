@@ -31,7 +31,7 @@ const main = async () => {
     });
 
     socket.on("disconnect", () => {
-      console.log("disconnected");
+      console.log(`disconnected ${socket.id}}`);
       count--;
       console.log(count);
       if (count == 0) {

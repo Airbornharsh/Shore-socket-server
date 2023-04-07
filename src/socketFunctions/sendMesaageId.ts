@@ -23,6 +23,7 @@ const main = async (io: Socket, socket: Socket, data: any) => {
 
   if (receiverSocketIds.length == 0) {
     deviceTokens.forEach(async (deviceToken: string) => {
+      console.log(deviceToken);
       await pushNotification(deviceToken, senderUserName, data.message, {
         senderUserId: senderUserId,
         senderSocketId: socket.id,
@@ -33,6 +34,7 @@ const main = async (io: Socket, socket: Socket, data: any) => {
     });
   } else {
     deviceTokens.forEach(async (deviceToken: string) => {
+      console.log(deviceToken);
       await pushNotification(deviceToken, senderUserName, data.message, {
         senderUserId: senderUserId,
         senderSocketId: socket.id,
